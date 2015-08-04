@@ -1,0 +1,147 @@
+48a49,111
+> Rect = class(function(r, x, y, w, h, min_w, max_w)
+>       		r.x = x
+>       		r.y = y
+>       		r.w = w
+> 		r.min_w = min_w
+> 		r.max_w = max_w
+>       		r.h = h
+> 	     end
+> )
+> 
+> function Rect:draw()
+>    gfx.set(1,0,1,1)
+>    gfx.rect(self.x, self.y, self.w, self.h);
+>    gfx.set(0,0,1,1)
+>    x2 = (self.w - self.min_w) / 2 + self.x
+>    gfx.rect(x2, self.y, self.min_w, self.h);
+> end
+>       
+> function make_rect(h, min_w, max_w)
+>    return Rect(0, 100, 0, h, min_w, max_w)
+> end
+> 
+> function arrange_horizontal(cont, gap_h, rects)
+>    local sum_min_w = 0;
+>    local sum_grow = 0;
+>    for i = 1, #rects do
+>       sum_min_w = sum_min_w + rects[i].min_w
+>       sum_grow = sum_grow + rects[i].max_w - rects[i].min_w
+>       rects[i].w = rects[i].min_w
+>    end
+> 
+>    -- O(n^2)
+>    function dist(left, rects)
+>       if #rects > 0 and left > 0 then
+> 	 nr = {}
+> 	 nl = left;
+> 	 dist_w = left / #rects 
+> 	 for i = 1, #rects do
+> 	    old_w = rects[i].w
+> 	    rects[i].w = math.min(rects[i].max_w, rects[i].w + dist_w)
+> 	    if (rects[i].w - old_w) > 0 then
+> 	       table.insert(nr, rects[i])
+> 	       nl = nl - (rects[i].w - old_w) 
+> 	    end 
+> 	 end
+> 
+> 	 return dist(nl, nr)
+>       else
+> 	 return left
+>       end
+>    end
+> 
+>    extra_w = cont.w - sum_min_w - (#rects + 1) * gap_h 
+>    gap_w = math.max(gap_h, dist(extra_w, rects) / (#rects + 1))
+>    local x = gap_w
+>    for i = 1, #rects do
+>       if rects[i].w > 0 then
+> 	 rects[i].x = x
+> 	 x = x + rects[i].w + gap_w
+>       end 
+>    end
+> end
+> 
+55,61c118,122
+<                       function(btn,x1,y1,w,h,state_count,state,visual_state,lbl,help_text)
+<                         btn.x1 = x1
+<                         btn.y1 = y1
+<                         btn.w = w
+<                         btn.h = h
+<                         btn.x2 = x1+w
+<                         btn.y2 = y1+h
+---
+>                       function(btn,x,y,w,h,state_count,state,visual_state,lbl,help_text)
+> 			 btn.label_w, btn.label_h = gfx.measurestr(btn.label)
+> 			 btn.rect = Rect(x,y,w,h,btn.label_w, btn.label_w + 20)
+>                         btn.x2 = btn.rect.x + btn.rect.w
+>                         btn.y2 = btn.rect.y + btn.rect.h
+68c129
+<                         btn.label_w, btn.label_h = gfx.measurestr(btn.label)
+---
+>                         
+98a160,161
+>   self.x2 = self.rect.x + self.rect.w
+>   self.y2 = self.rect.y + self.rect.h
+101c164
+<   if gfx.mouse_x > self.x1 and gfx.mouse_x < self.x2 and gfx.mouse_y > self.y1 and gfx.mouse_y < self.y2 then
+---
+>   if gfx.mouse_x > self.rect.x and gfx.mouse_x < self.x2 and gfx.mouse_y > self.rect.y and gfx.mouse_y < self.y2 then
+107,108c170,171
+<       gfx.y = self.y1
+<       gfx.printf(self.help_text)
+---
+>       gfx.y = self.rect.y
+>       gfx.printf(self.rect.help_text)
+126c189
+<     gfx.rect(self.x1, self.y1, self.w, self.h)
+---
+>     gfx.rect(self.rect.x, self.rect.y, self.rect.w, self.rect.h)
+130c193
+<     gfx.rect(self.x1, self.y1, self.w, self.h)
+---
+>     gfx.rect(self.rect.x, self.rect.y, self.rect.w, self.rect.h)
+134,135c197,198
+<     gfx.line(self.x1, self.y1, self.x1, self.y2-1)
+<     gfx.line(self.x1+1, self.y1+1, self.x1+1, self.y2-2)
+---
+>     gfx.line(self.rect.x, self.rect.y, self.rect.x, self.y2-1)
+>     gfx.line(self.rect.x+1, self.rect.y+1, self.rect.x+1, self.y2-2)
+137,138c200,201
+<     gfx.line(self.x1+1, self.y1, self.x2-1, self.y1)
+<     gfx.line(self.x1+2, self.y1+1, self.x2-2, self.y1+1)
+---
+>     gfx.line(self.rect.x+1, self.rect.y, self.x2-1, self.rect.y)
+>     gfx.line(self.rect.x+2, self.rect.y+1, self.x2-2, self.rect.y+1)
+142,143c205,206
+<     gfx.line(self.x1+1, self.y2-1, self.x2-2, self.y2-1)
+<     gfx.line(self.x1+2, self.y2-2, self.x2-3, self.y2-2)
+---
+>     gfx.line(self.rect.x+1, self.y2-1, self.x2-2, self.y2-1)
+>     gfx.line(self.rect.x+2, self.y2-2, self.x2-3, self.y2-2)
+145,146c208,209
+<     gfx.line(self.x2-1, self.y2-1, self.x2-1, self.y1+1)
+<     gfx.line(self.x2-2, self.y2-2, self.x2-2, self.y1+2)
+---
+>     gfx.line(self.x2-1, self.y2-1, self.x2-1, self.rect.y+1)
+>     gfx.line(self.x2-2, self.y2-2, self.x2-2, self.rect.y+2)
+151,152c214,215
+<     gfx.x = self.x1 + math.floor(0.5*self.w - 0.5 * self.label_w) -- center the label
+<     gfx.y = self.y1 + 0.5*self.h - 0.5*gfx.texth
+---
+>     gfx.x = self.rect.x + math.floor(0.5*self.rect.w - 0.5 * self.label_w) -- center the label
+>     gfx.y = self.rect.y + 0.5*self.rect.h - 0.5*gfx.texth
+184a248,252
+>   container_rect.w = gfx.w
+>   -- this should be called only when screen size has changed
+>   arrange_horizontal(container_rect, 5, {play_btn.rect, spacer1, stop_btn.rect})
+>   
+> 
+215c283
+<   stop_btn = Button(10,play_btn.y2+10,80,20,2,0,0,"Stop","")
+---
+>   stop_btn = Button(10,20,80,20,2,0,0,"Stop","")
+219a288,290
+> 
+>   spacer1 = make_rect(20, 0, 10000)
+>   container_rect = Rect(0,100,0,20)
