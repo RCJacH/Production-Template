@@ -109,11 +109,11 @@ function getInterval(input)
 end
 
 
-function getPos(pattern, timesig)
+function getPos(pattern, timesigupper)
     if not pattern then return end
-    if not timesig then timesig = 4 end
+    if not timesigupper then timesigupper = 4 end
     local beat, pat, div, i_div = splitPos(pattern)
-    s_pos = ((pat - 1) + (beat -1) * timesig) * i_div
+    local s_pos = ((pat - 1) + (beat -1) * timesigupper) * i_div
     return math.modf(s_pos), div, i_div
 end
 

@@ -10,8 +10,8 @@ package.path = package.path .. ";" .. script_path:match("(.*"..S_slash..")") .. 
 
 sortListPos = function(a, b) return a[2]>b[2] end
 sortPos = function(a,b)
-beat1, pat1 = splitPos(a.pos)
-beat2, pat2 = splitPos(b.pos)
+local beat1, pat1 = splitPos(a.pos)
+local beat2, pat2 = splitPos(b.pos)
     if beat1 ~= beat2 then
         return beat1<beat2
     else
@@ -54,8 +54,8 @@ function tableMerge(t1, t2)
     return t1
 end
 
-function splitPat(input, timesig)
-    if not timesig then timesig = 4 end
+function splitPat(input, timesigupper)
+    if not timesigupper then timesigupper = 4 end
     local a_listIn, a_listOut, a_listOut2 = {},{},{}
     for div, pat in string.gmatch(input, "([%l%*]*)([%x%d]+)") do
         a_listIn[#a_listIn + 1] = {div, pat}

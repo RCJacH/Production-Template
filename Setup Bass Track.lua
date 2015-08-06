@@ -1,5 +1,5 @@
 --[[
- * ReaScript Name: Set Bass Pattern
+ * ReaScript Name: Setup Bass Track
  * Description: Generate Bass track based on chord track and containers
  * Instructions: Setup Chord Track and Container, then run this script
  * Author: RCJacH

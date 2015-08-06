@@ -41,13 +41,36 @@ end
 
 function delEarlyEnd()
 	if B_EarlyEnd then
-		local list = {A_RH,A_LH,A_LF,A_RF}
-		for _, v in pairs(list) do -- for each limb
+		local limblist = {a_LF,a_RF,a_LH,a_RH}
+		for _, v in pairs(limblist) do -- for each limb
 			if v then
-				for i, v2 in ipairs(list) do
-					pos = v2:getPos(i)
+				for i, v2 in ipairs(v) do
+					local pos, beat, pat
+					pos = v:getPos(i)
+					beat, pat = splitPos(pos)
+					if beat == I_seqLength and pat > 3 then
+						v:setVel(i, 0, 0)
+					end
 				end
 			end
 		end
+	end
+end
+
+function limitSnare()
+	local removelist = {}
+	for i, v in ipairs(a_RH) do --for each hit
+		for j, v2 in ipairs(a_LH) do
+			if v:getPos(i) == v2:getPos(j) and v:getPitch(i) == v2:getPitch(i) then
+				if v:getPri(i) > v2:getPri(j) then
+					removelist[#removelist+1] = j
+				else
+					removelist[#removelist+1] = i
+				end
+			end
+		end
+	end
+	for i, v in ipairs(removelist) do
+		w:removeHit(v)
 	end
 end

@@ -71,19 +71,21 @@ function main() -- local (i, j, item, take, track)
 			reaper.MIDI_DeleteNote(activeTake, i)
 		end
 	end
+	local a_kickGroove, a_snareGroove, a_hhGroove
 	A_Rhythms = build_patData(script_path:match("(.*"..S_slash..")").."Functions"..S_slash.."Database"..S_slash.."Rhythm Patterns.ini")
-	seqLength = 16
-	a_kickGroove = {"Rock"}
-	a_snareGroove = {"Rock"}
-	a_hhGroove = {"Rock"}
-	A_hhElement = getElement("HH",a_hhGroove, seqLength)
-	A_snareElement = getElement("Snare",a_snareGroove, seqLength)
-	A_kickElement = getElement("Kick",a_kickGroove, seqLength)
+	local a_kickGroove = {"Simple"}
+	local a_snareGroove = {"Backbeat"}
+	local a_hhGroove = {"Heavy"}
+	A_hhElement = getElement("HH",a_hhGroove, I_seqLength)
+	A_snareElement = getElement("Snare",a_snareGroove, I_seqLength)
+	limitSnare()
+	A_kickElement = getElement("Kick",a_kickGroove, I_seqLength)
 	a_LH = buildLimbList({A_snareElement, A_hhElement}, "LH")
 	a_RH = buildLimbList({A_snareElement, A_hhElement}, "RH")
-	addFillCrash()
-	filters()
 	a_RF = buildLimbList({A_kickElement}, "RF")
+	setGroove()
+	--getAccent()
+	getFills()
 
 	table.sort(a_LH, sortPos)
 	table.sort(a_RH, sortPos)
@@ -262,6 +264,7 @@ function main() -- local (i, j, item, take, track)
 	end -- ENDLOOP tracks loop
 	--]]
 	A_Rhythms = nil
+	A_kickElement, A_snareElement, A_hhElement = nil, nil, nil
 	-- YOUR CODE ABOVE
 	reaper.UpdateTimeline()
 	reaper.UpdateArrange() -- Update the arrangement (often needed)

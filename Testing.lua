@@ -8,6 +8,6 @@ else
 end
 package.path = package.path .. ";" .. script_path:match("(.*"..S_slash..")") .. "?.lua"
 --require("Setup Chord Track")
---require("Set Bass Pattern")
-require("Set Drum Pattern")
+--require("Setup Bass Track")
+require("Setup Drum Track")
 

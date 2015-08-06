@@ -10,13 +10,12 @@ package.path = package.path .. ";" .. script_path:match("(.*"..S_slash..")") .. 
 require("Note Functions")
 require("Drum Grooves")
 require("Drum Filters")
-
+require("Drum Fills")
 
 function getElement(instrument, style, seq)
 	local pat, beat, a_inPairs
 	local a_outSeq = drumSeq()
 	local beats = 0
-	local l=1
 	while beats < seq do
 		for i, v in ipairs(style) do
 			pat, beat, tech = getStyle(instrument, v)
@@ -25,27 +24,64 @@ function getElement(instrument, style, seq)
 			a_outSeq:addEle(ele, (i-1)*beat)
 			beats = beats + beat
 		end
-		l=l+1
 	end
 	return a_outSeq
 end
 
-function setGroove(instrument, list)
-	-- apply filter
-	-- apply limitation
+function setGroove()
+	filters()
+end
+
+function getAccents()
+	setAccents()
+end
+function getFills()
+	setFills()
+	addFillCrash()
 end
 
 function pushMIDI(list)
-	local s_pos, k_pos, e_pos, k_end, pitch, vel, tech
+	local s_pos, k_pos, e_pos, k_end, pitch, vel, tech, early, s_pos2, vel2
 	for i, v in pairs(list) do -- for each pattern
 		local beat, pat = splitPos(v.pos)
-		s_pos = getPos(v.pos)+math.random(-2,2)+I_pocket+Indent
+		if beat==1 and pat ==1 then
+			if B_lastEarly then
+				early = getLength{"8"}
+			else
+				early = 0
+			end
+		else
+			early = 0
+			B_lastEarly = false
+		end
+		s_pos = getPos(v.pos)+math.random(0-I_timeRandom,I_timeRandom)+I_pocket+Indent-early+v.time
 		e_pos = s_pos+getLength{"32"}
 		pitch = v.pitch
+		if not v.tech then v.tech = "" end
 		if v.vel > 0 then
-			vel = v.vel + math.random(-5 , 5)
+			if v.tech:find 'Drag' then
+				pitch = getDrumMap(S_DrumLibrary, "SD Drag")
+			end
+			vel = math.ceil(v.vel + math.random(0-I_velRandom , I_velRandom))
 			if vel > 127 then vel = 127 end
-			reaper.MIDI_InsertNote(activeTake, 0, 0, s_pos, e_pos, 0, pitch, vel)
+			reaper.MIDI_InsertNote(activeTake, 0, 0, s_pos, e_pos, 0, pitch, vel) -- output original note
+			if v.tech:find 'Flam' then
+				s_pos2 = s_pos + I_flamIndent
+				vel2 = vel - 5
+				vel = vel + 5
+				reaper.MIDI_InsertNote(activeTake, 0, 0, s_pos2, s_pos2+getLength{"32"}, 0, pitch, vel2+math.random(0-I_velRandom, I_velRandom))
+			elseif v.tech:find 'Triple' then
+				s_pos2 = s_pos + getLength{"48"}
+				vel2 = math.ceil(vel * I_velDep)
+				reaper.MIDI_InsertNote(activeTake, 0, 0, s_pos2, s_pos2+getLength{"48"}, 0, pitch, vel2+math.random(0-I_velRandom, I_velRandom))
+				s_pos2 = s_pos2 + getLength{"48"}
+				vel2 = math.ceil(vel2 * I_velDep)
+				reaper.MIDI_InsertNote(activeTake, 0, 0, s_pos2, s_pos2+getLength{"48"}, 0, pitch, vel2+math.random(0-I_velRandom, I_velRandom))
+			elseif v.tech:find 'Double' then
+				s_pos2 = s_pos + getLength{"32"}
+				vel2 = math.ceil(vel * I_velDep)
+				reaper.MIDI_InsertNote(activeTake, 0, 0, s_pos2, s_pos2+getLength{"32"}, 0, pitch, vel2+math.random(0-I_velRandom, I_velRandom))
+			end
 		end
 	end
 end
@@ -65,6 +101,7 @@ function applyLimit(input)
 end
 
 function buildLimbList(input, limb)
+	local length
 	if not length then length = #input end
 	local list = drumSeq()
 	for _, v in ipairs(input) do -- for each Seq
@@ -79,18 +116,3 @@ function buildLimbList(input, limb)
 	return list
 end
 
-function addFillCrash()
-	if B_EndCrash then
-		local newHit
-		local pos, pitch, vel, pri, limb, tech, randPitch, early
-		if B_EarlyEnd then pos = "s"..seqLength..":"..3
-		else pos = "s"..(seqLength + 1)..":"..1 end
-		if B_RandomCrash then randPitch = math.random(0,4) else randPitch = 0 end
-		pitch = getDrumMap(S_DrumLibrary, "Crash 1") + randPitch
-		vel = I_velocity+5
-		pri = 10
-		limb = "RH"
-		newHit = drumHit(pos, pitch, vel, pri, limb, "")
-		a_RH:addEle(newHit)
-	end
-end

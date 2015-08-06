@@ -10,15 +10,17 @@ setmetatable(drumHit, {
   end,
 })
 
-function drumHit:new(pos, pitch, vel, pri, limb, tech)
+function drumHit:new(pos, pitch, vel, pri, time, limb, tech)
 	if not pos then return end
 	if not pitch then return end
 	if not vel then vel = I_velocity end
 	if not pri then pri = 0 end
+	if not time then time = 0 end
 	self.pos = pos
 	self.pitch = pitch
 	self.vel = vel
 	self.pri = pri
+	self.time = time
 	self.limb = limb
 	self.tech = tech
 	return self
@@ -63,6 +65,14 @@ function drumHit:new(pos, pitch, vel, pri, limb, tech)
 
 	function drumHit:getPri()
 		return self.pri
+	end
+
+	function drumHit:setTime(val)
+		self.time = val
+	end
+
+	function drumHit:getTime()
+		return self.time
 end
 
 
@@ -122,7 +132,7 @@ function drumSeq:new()
 				if i == "pos" then
 					beat = splitPos(v)
 					if addbeat then beat = beat + addbeat end
-					v2 = splitPos(v, beat)
+					local v2 = splitPos(v, beat)
 					f[i] = v2
 				else
 					f[i] = v
@@ -133,8 +143,32 @@ function drumSeq:new()
 			return
 		end
 	end
+	function drumSeq:addHit(input, num)
+		local f = {}
+		if type(input) == 'table' then
+			if not num then num = #self + 1 end
+		-- our new class is a shallow copy of the input class!
+			for i, v in pairs(input) do
+				f[i] = v
+			end
+			-- self._input = input
+			self[num] = f
+		else
+			return
+		end
+	end
+	function drumSeq:removeHit(ele, hit)
+		if not ele then return
+		elseif type(ele) == 'number' then
+			if hit and hit ~= 0 then
+				table.remove(self[ele], hit)
+			else
+				table.remove(self, ele)
+			end
+		end
+	end
 	function drumSeq:exist(ele, hit)
-		if hit then
+		if hit and hit ~= 0 then
 			if self[ele][hit] then return true else return false end
 		else
 			if self[ele] then return true else return false end
@@ -151,58 +185,88 @@ function drumSeq:new()
 		end
 	end
 	function drumSeq:getPos(ele, hit)
-		if hit then
+		if hit and hit ~= 0 then
 			if self[ele][hit].pos then return self[ele][hit].pos end
 		else
 			if self[ele].pos then return self[ele].pos end
 		end
 	end
 	function drumSeq:setPos(ele, hit, input)
-		if hit then
+		if hit and hit ~= 0 then
 			self[ele][hit].pos = input
 		else
 			self[ele].pos = input
 		end
 	end
 	function drumSeq:getVel(ele, hit)
-		if hit then
+		if hit and hit ~= 0 then
 			if self[ele][hit].vel then return self[ele][hit].vel end
 		else
 			if self[ele].vel then return self[ele].vel end
 		end
 	end
 	function drumSeq:setVel(ele, hit, input)
-		if hit then
+		if hit and hit ~= 0 then
 			self[ele][hit].vel = input
 		else
 			self[ele].vel = input
 		end
 	end
 	function drumSeq:getPitch(ele, hit)
-		if hit then
+		if hit and hit ~= 0 then
 			if self[ele][hit].pitch then return self[ele][hit].pitch end
 		else
 			if self[ele].pitch then return self[ele].pitch end
 		end
 	end
 	function drumSeq:setPitch(ele, hit, input)
-		if hit then
+		if hit and hit ~= 0 then
 			self[ele][hit].pitch = input
 		else
 			self[ele].pitch = input
 		end
 	end
+	function drumSeq:getTime(ele, hit)
+		if hit and hit ~= 0 then
+			if self[ele][hit].time then return self[ele][hit].time end
+		else
+			if self[ele].time then return self[ele].time end
+		end
+	end
+	function drumSeq:setTime(ele, hit, input)
+		if hit and hit ~= 0 then
+			self[ele][hit].time = input
+		else
+			self[ele].time = input
+		end
+	end
 	function drumSeq:getLimb(ele, hit)
-		if self[ele][hit].limb then return self[ele][hit].limb end
+		if hit and hit ~= 0 then
+			if self[ele][hit].limb then return self[ele][hit].limb end
+		else
+			if self[ele].limb then return self[ele].limb end
+		end
 	end
 	function drumSeq:setLimb(ele, hit, input)
-		self[ele][hit].limb = input
+		if hit and hit ~= 0 then
+			self[ele][hit].limb = input
+		else
+			self[ele].limb = input
+		end
 	end
 	function drumSeq:getTech(ele, hit)
-		if self[ele][hit].tech then return self[ele][hit].tech end
+		if hit and hit ~= 0 then
+			if self[ele][hit].tech then return self[ele][hit].tech end
+		else
+			if self[ele].tech then return self[ele].tech end
+		end
 	end
 	function drumSeq:setTech(ele, hit, input)
-		self[ele][hit].tech = input
+		if hit and hit ~= 0 then
+			self[ele][hit].tech = input
+		else
+			self[ele].tech = input
+		end
 	end
 end
 

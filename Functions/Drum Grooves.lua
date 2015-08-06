@@ -12,20 +12,20 @@ require("Drum Variables")
 
 function setStyle(input, instrument, length, tech, seq)
 	if not input then return end
-	local s_pos, pitch, div, beat, pat, priority, limb, vel, hit
 	local a_outEle =  drumEle(length)
 	for i,v in ipairs(input) do
+		local s_pos, pitch, time, beat, pat, pri, limb, vel, hit
 		beat, pat = splitPos(v)
 		s_pos = splitPos(v, beat+seq)
 		if stringComp(instrument, "kick") then --if kick
-			priority = 2
+			pri = 3
 			pitch = getDrumMap(S_DrumLibrary, instrument)
-			vel = I_velocity
+			vel = I_velLimit
 			limb = "RF"
 		elseif stringComp(instrument, "snare") then --if snare
 			pitch = getDrumMap(S_DrumLibrary, "SD Hit")
-			priority = 1
-			vel = I_velocity
+			pri = 1
+			vel = I_velLimit
 			limb = dualHHSnare(s_pos)
 		elseif stringComp(instrument, "hh") then -- if hh
 			-- set open HH
@@ -80,17 +80,17 @@ function setStyle(input, instrument, length, tech, seq)
 			end
 			-- set velocity
 			if tech:find 'Full' then
-				vel = I_velocity - (beat + seq - 1 + I_hhHeavyBeat) % 2 * I_hhHeavyAccent
+				vel = I_velLimit - (beat + seq - 1 + I_hhHeavyBeat) % 2 * I_hhHeavyAccent
 			else
-				vel = I_velocity - (pat+1)%2*math.ceil(I_velocity*0.17) - pat*math.ceil(I_velocity*0.09) + math.ceil(I_hhOpen/127) * 10 - (beat * seq + I_hhHeavyBeat) % 2 * I_hhHeavyAccent
+				vel = I_velLimit - (pat+1)%2*math.ceil(I_velLimit*0.17) - pat*math.ceil(I_velLimit*0.09) + math.ceil(I_hhOpen/127) * 10 - (beat * seq + I_hhHeavyBeat) % 2 * I_hhHeavyAccent
 			end
 			-- set Priority
-			priority = 0
+			pri = 0
 		else
 			pitch = getDrumMap(S_DrumLibrary, instrument)
 		end
 
-		hit = drumHit(s_pos, pitch, vel, priority, limb, tech)
+		hit = drumHit(s_pos, pitch, vel, pri, time, limb, tech)
 		a_outEle:addHit(hit)
 	end
 	return a_outEle
@@ -111,7 +111,7 @@ function getStyle(instrument, style)
 		elseif stringComp(instrument, "hh") or stringComp(instrument, "hihat") then instrument = "hh"
 		elseif stringComp(instrument, "ride") then instrument = "r"
 	end
-	local ins, name, content, p2, b2, t2, stylesub, pattern, beats, tech, ins2, rIndex
+	local ins, name, content, p2, b2, t2, stylesub, pattern, beats, tech, ins2, rIndex, i, s
 	for a in io.lines(script_path:match("(.*"..S_slash..")").."Database"..S_slash.."DrumGrooveType.ini") do
 		ins, name, content = a:match '(%l+)(%L.+):%s*(.*)'
 		if stringComp(ins, instrument) and stringComp(name, style) then
@@ -128,15 +128,15 @@ function getStyle(instrument, style)
 					pattern, beats, tech = getStyle(ins2, stylesub)
 				elseif content:find '%+' and not content:find '%%' then -- if comb
 					for stylesub in content:gmatch '([%w%s]+)' do -- for every style between +
-						local i, s = string.match(stylesub, "(%l+)(%L.+)") -- match each substyle
+						i, s = string.match(stylesub, "(%l+)(%L.+)") -- match each substyle
 						p2, b2, t2 = getStyle(i, s) -- get substyle
 						if not pattern then pattern = p2 else pattern = pattern..p2 end
 						if not beats then beats = b2 else beats = beats + b2 end
 					end
 				elseif content:find '%;' then
 					stylesub, tech = content:match '([%w%s]+);(%w*)' -- get style;tech
-					i, c = string.match(stylesub, "(%l+)(%L.+)") -- match style
-					pattern, beats, t2 = getStyle(i, c)
+					i, s = string.match(stylesub, "(%l+)(%L.+)") -- match style
+					pattern, beats, t2 = getStyle(i, s)
 					if not tech then
 						if t2 then tech = t2 end
 					else
@@ -149,21 +149,13 @@ function getStyle(instrument, style)
 	end
 end
 
-
-function setVariation( ... )
-	-- body
-
-
-
-end
-
 function dualHHSnare(pos)
 	local altLimb
 	if A_hhElement then
 		for k, con in ipairs(A_hhElement) do
 			for k2, _ in ipairs(con) do
 				if A_hhElement:getPos(k, k2) == pos then
-					kl, k2l = A_hhElement:last(k, k2) -- get pos of last hit
+					local kl, k2l = A_hhElement:last(k, k2) -- get pos of last hit
 					local tech1, tech = A_hhElement:getTech(k, k2), A_hhElement:getTech(kl, k2l)
 					if tech1:find 'Alternate' or tech:find 'Alternate' then
 						altLimb = true
